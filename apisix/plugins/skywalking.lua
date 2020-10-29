@@ -19,9 +19,8 @@ local core = require("apisix.core")
 local process = require("ngx.process")
 local ngx = ngx
 local math = math
-local select = select
-local type = type
 local require = require
+local try_read_attr = core.table.try_read_attr
 
 local plugin_name = "skywalking"
 local metadata_schema = {
@@ -100,20 +99,6 @@ function _M.log(conf, ctx)
         sw_tracer:prepareForReport()
         core.log.info("tracer prepare for report")
     end
-end
-
-
-local function try_read_attr(t, ...)
-    local count = select('#', ...)
-    for i = 1, count do
-        local attr = select(i, ...)
-        if type(t) ~= "table" then
-            return nil
-        end
-        t = t[attr]
-    end
-
-    return t
 end
 
 
