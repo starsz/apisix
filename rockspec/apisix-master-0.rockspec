@@ -56,6 +56,7 @@ dependencies = {
     "dkjson = 2.5-2",
     "resty-redis-cluster = 1.02-4",
     "lua-resty-expr = 1.0.0",
+    "luasocket = 3.0rc1-2",
 }
 
 build = {

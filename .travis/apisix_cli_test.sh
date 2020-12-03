@@ -817,3 +817,53 @@ fi
 done
 
 echo "passed: etcd auth enabled and init kv has been set up correctly"
+
+# check etcd connect refused
+git checkout conf/config.yaml
+
+echo '
+etcd:
+  host:
+    - "http://127.0.0.1:2389"
+  prefix: "/apisix"
+' > conf/config.yaml
+
+make init &>/tmp/apisix_temp &
+sleep 1
+if [`grep -c "connection refused" /tmp/apisix_temp` -ne '1']; then
+    echo "failed: not output connection refused"
+    exit 1
+fi
+
+echo "passed: show connection refused info successfully"
+
+# check etcd auth error
+git checkout conf/config.yaml
+
+export ETCDCTL_API=3
+etcdctl version
+etcdctl --endpoints=127.0.0.1:2379 user add "root:apache-api6"
+etcdctl --endpoints=127.0.0.1:2379 role add root
+etcdctl --endpoints=127.0.0.1:2379 user grant-role root root
+etcdctl --endpoints=127.0.0.1:2379 user get root
+etcdctl --endpoints=127.0.0.1:2379 auth enable
+etcdctl --endpoints=127.0.0.1:2379 --user=root:apache-api6 del /apisix --prefix
+
+echo '
+etcd:
+  host:
+    - "http://127.0.0.1:2379"
+  prefix: "/apisix"
+  timeout: 30
+  user: root
+  password: apache-api7
+' > conf/config.yaml
+
+make init &>/tmp/apisix_temp &
+sleep 1
+if [`grep -c "invalid user ID or password" /tmp/apisix_temp` -ne '1']; then
+    echo "failed: not output invalid user ID or password"
+    exit 1
+fi
+
+echo "passed: show password error successfully"
